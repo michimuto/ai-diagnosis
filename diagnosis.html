@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>AI×人のチカラ診断</title>
+<style>
+:root {
+  --bg: #F3EFFA; --surface: #FFFFFF; --fg: #1B1236; --muted: #554A72; --line: #D6CCEB;
+  --accent: #4A2FB0; --accent-soft: #E6DEF8; --mint: #1E8F82; --warn: #9A3B00;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #120B26; --surface: #1D1438; --fg: #ECE6F8; --muted: #B7ACD3; --line: #3A2E5E;
+    --accent: #A897F5; --accent-soft: #2C2154; --mint: #6FD8C8; --warn: #F0A070; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif; font-size: 16px; line-height: 1.7; padding: 0 16px 56px; }
+header.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 0 10px; }
+.wrap { max-width: 680px; margin: 0 auto; }
+.progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.steplabel { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+main.wrap { display: flex; flex-direction: column; gap: 18px; padding-top: 8px; }
+h1 { font-size: 24px; line-height: 1.4; margin: 8px 0 0; }
+h2 { font-size: 20px; margin: 0; }
+p { margin: 0; }
+.lead { color: var(--muted); font-size: 15px; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.q .t { font-weight: 700; font-size: 16px; }
+.q .no { color: var(--accent); margin-right: 6px; }
+.q .hint { font-size: 13px; color: var(--muted); }
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opts label { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opts input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.likert { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.likert label { flex-direction: column; gap: 4px; text-align: center; font-size: 12px; padding: 8px 2px; }
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 560px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.card { min-height: 46px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font: inherit; font-size: 14px; cursor: pointer; padding: 6px 4px; }
+.card[aria-pressed="true"] { background: var(--accent-soft); border: 2px solid var(--accent); font-weight: 700; }
+select, textarea { width: 100%; font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+textarea { min-height: 72px; resize: vertical; }
+.count { font-size: 12px; color: var(--muted); text-align: right; }
+.nav { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+button.primary, a.primary { display: inline-flex; justify-content: center; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; border: none; background: var(--accent); color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+button.secondary { min-height: 48px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.error { color: var(--warn); font-size: 14px; }
+.bars { display: flex; flex-direction: column; gap: 10px; }
+.bar { display: grid; grid-template-columns: 11em minmax(0, 1fr) 3em; gap: 10px; align-items: center; font-size: 14px; }
+.bar .track { height: 12px; background: var(--accent-soft); border-radius: 6px; overflow: hidden; }
+.bar .track i { display: block; height: 100%; background: var(--accent); border-radius: 6px; }
+.bar b { text-align: right; font-variant-numeric: tabular-nums; }
+.big { font-size: 34px; font-weight: 700; color: var(--accent); line-height: 1.2; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag { border: 1px solid var(--mint); color: var(--mint); border-radius: 999px; padding: 2px 12px; font-size: 14px; font-weight: 700; }
+#idbox { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; background: var(--accent-soft); border-radius: 8px; padding: 12px; user-select: all; max-height: 160px; overflow: auto; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+  <p class="steplabel" id="steplabel"></p>
+</div></header>
+
+<main class="wrap" id="app"></main>
+
+<script>
+// ===== 設定 =====
+const FORMS = { a01: "https://forms.office.com/r/XXXXXXXXXX" }; // 会社ごとの送信先（URLの末尾 #a01）
+const DEPTS = ["総務・経理", "営業", "工務・現場", "製造", "その他"];   // 部署は会社ごとに書き換える
+const VERSION = 2;
+
+// ===== 選択肢 =====
+const L5 = ["そう思わない", "あまり思わない", "どちらとも", "ややそう思う", "そう思う"];
+const HOURS = ["やっていない", "1時間未満", "1〜3時間", "3〜5時間", "5時間以上"];
+const HOURV = [0, 0.5, 2, 4, 6];
+const AREAS = ["人材育成・教育", "組織・エンゲージメント", "業務効率化・生産性", "人材・組織データ", "経営戦略・AI活用"];
+const WORDS = ["粘り強い", "聞き上手", "場を和ませる", "段取りがよい", "落ち着いている", "好奇心がある", "気配りができる", "決めたらやり切る",
+  "人に教えるのが得意", "新しいことに挑戦する", "周りを巻き込む", "丁寧に確かめる", "責任感がある", "発想がやわらかい", "数字に強い", "手先が器用", "話をまとめるのが得意", "困っている人に気づく"];
+const WANTS = ["引継ぎ", "新人の教育", "見積を早く出す", "過去の資料を活かす", "現場の記録を残す", "報告をまとめる", "お客様への提案", "段取りを決める", "部署間の情報共有", "手順の見直し"];
+const BLOCKS = ["説明する時間がない", "自分でやったほうが早い", "やり方が分からない", "情報がばらばらにある", "失敗するのが怖い", "AIに任せてよいか分からない", "毎回やり方が違う", "紙で残っている", "相談できる人がいない", "ほかの仕事に追われている"];
+const HOURUSE = ["勉強", "資格", "育成", "趣味", "家族", "健康", "地域・ボランティア", "休む"];
+
+// 質問の定義。type: L=5段階, S=1つ選ぶ, M=複数選ぶ(max), H=時間の幅, W=言葉カード, T=記入式, P=組み合わせ
+const Q = [
+  // 1 人材育成・教育
+  { a: 0, id: "q1", type: "S", t: "この1年、仕事に役立つ学びの時間を、週にどれくらいとれましたか", o: ["ほとんどない", "30分未満", "30分〜1時間", "1〜3時間", "3時間以上"], score: [0, 25, 50, 75, 100] },
+  { a: 0, id: "q2", type: "L", t: "社内に、研修や勉強の機会がある" },
+  { a: 0, id: "q3", type: "L", t: "自分の仕事に必要な技能が、何か分かっている" },
+  { a: 0, id: "q4", type: "L", t: "自分の技能がどこまで身についているかを、上司と話したことがある" },
+  { a: 0, id: "q5", type: "M", max: 3, t: "これから学びたいこと（3つまで）", o: ["AIの使い方", "資格", "専門の技術", "人をまとめる力", "パソコン・IT", "話し方・伝え方", "語学", "お金・経営"] },
+  { a: 0, id: "q6", type: "L", t: "人に教える機会がある" },
+  { a: 0, id: "q7", type: "L", t: "仕事のコツを、文書や手順書で残している" },
+  { a: 0, id: "q8", type: "L", t: "AIの使い方を学びたい" },
+  { a: 0, id: "k1", type: "T", t: "今の仕事で、もっと上手くなりたいことは何ですか" },
+  { a: 0, id: "k2", type: "T", t: "新しい人に仕事を教えるとき、困ることは何ですか" },
+  // 2 組織・エンゲージメント
+  { a: 1, id: "q9", type: "L", t: "仕事に、熱意を持って取り組めている" },
+  { a: 1, id: "q10", type: "L", t: "今の仕事で、自分らしさを活かせている" },
+  { a: 1, id: "q11", type: "L", t: "意見や疑問を、安心して口にできる" },
+  { a: 1, id: "q12", type: "S", t: "上司と1対1で話す機会は、どれくらいありますか", o: ["ほとんどない", "年に数回", "月に1回くらい", "月に2回以上"], score: [0, 33, 67, 100] },
+  { a: 1, id: "q13", type: "S", t: "ほかの部署の人に相談する頻度は", o: ["ほとんどない", "月に数回", "週に1回くらい", "ほぼ毎日"], score: [0, 33, 67, 100] },
+  { a: 1, id: "q14", type: "L", t: "自分の頑張りが、認められていると感じる" },
+  { a: 1, id: "q15", type: "L", t: "この会社で、長く働きたい" },
+  { a: 1, id: "q16", type: "W", max: 3, t: "自分らしいと思う言葉を、3つまで選んでください" },
+  { a: 1, id: "k3", type: "T", t: "職場で、もっとこうなったらいいと思うことは何ですか" },
+  { a: 1, id: "k4", type: "T", t: "最近、同僚に助けられたことや、うれしかったことは何ですか" },
+  // 3 業務効率化・生産性
+  { a: 2, id: "q17", type: "H", c: 0.3, t: "文書・報告書・現場の書類づくりに、週何時間かけていますか" },
+  { a: 2, id: "q18", type: "H", c: 0.4, t: "議事録・日報のまとめに、週何時間かけていますか" },
+  { a: 2, id: "q19", type: "H", c: 0.3, t: "メールや連絡文の作成に、週何時間かけていますか" },
+  { a: 2, id: "q20", type: "H", c: 0.25, t: "調べものに、週何時間かけていますか" },
+  { a: 2, id: "q21", type: "H", c: 0.2, t: "集計や表づくりに、週何時間かけていますか" },
+  { a: 2, id: "q22", type: "H", c: 0.15, t: "転記やデータの入力に、週何時間かけていますか" },
+  { a: 2, id: "q23", type: "H", c: -1, t: "過去の資料ややり取りの履歴を探すのに、週何時間かけていますか" },
+  { a: 2, id: "q24", type: "S", t: "仕事の資料は、主にどこに置いていますか", o: ["クラウドや共有の場所に、まとまっている", "個人のPCや、ばらばらのフォルダ", "紙が中心"], score: [100, 50, 0] },
+  { a: 2, id: "k5", type: "T", t: "毎日・毎週、同じ手順でくり返している作業は何ですか（頻度も）" },
+  { a: 2, id: "k6", type: "T", t: "一番「時間がもったいない」と感じる作業は何ですか" },
+  // 4 人材・組織データ
+  { a: 3, id: "q25", type: "S", t: "部署", o: DEPTS, noScore: true },
+  { a: 3, id: "q26", type: "S", t: "仕事の種類", o: ["事務", "現場", "管理", "営業", "その他"], noScore: true },
+  { a: 3, id: "q27", type: "S", t: "立場", o: ["経営", "管理職", "一般"], noScore: true },
+  { a: 3, id: "q28", type: "S", t: "勤続年数", o: ["3年未満", "3〜10年", "10〜20年", "20年以上"], noScore: true },
+  { a: 3, id: "q29", type: "S", t: "年代", o: ["20代以下", "30代", "40代", "50代", "60代以上"], noScore: true },
+  { a: 3, id: "q30", type: "L", t: "自分の仕事を、ほかの人が代われる" },
+  { a: 3, id: "q31", type: "L", t: "自分の技能や資格を、会社が把握していると思う" },
+  { a: 3, id: "q32", type: "L", rev: true, opt: true, t: "この1年で、辞めようと考えたことがある（答えなくても構いません）" },
+  { a: 3, id: "k7", type: "T", t: "自分の仕事で、自分しか分からないことは何ですか" },
+  { a: 3, id: "k8", type: "T", t: "会社に知ってほしい、自分の技能や資格はありますか" },
+  // 5 経営戦略・AI活用
+  { a: 4, id: "q33", type: "S", t: "仕事でAIを使う頻度は", o: ["使っていない", "月に数回", "週に1回以上", "ほぼ毎日"], score: [0, 33, 67, 100] },
+  { a: 4, id: "q34", type: "M", max: 8, t: "AIを何に使っていますか（あてはまるものすべて）", o: ["使っていない", "調べもの", "文章の下書き", "要約", "アイデア出し", "表や計算", "画像", "業務の仕組みとつなぐ"] },
+  { a: 4, id: "q35", type: "M", max: 6, t: "使っているAIの道具（あてはまるものすべて）", o: ["使っていない", "ChatGPT", "Copilot", "Gemini", "Claude", "その他"] },
+  { a: 4, id: "q36", type: "L", t: "AIに入れてよい情報のルールを知っている" },
+  { a: 4, id: "q37", type: "L", rev: true, t: "AIに仕事を奪われるのではと不安がある" },
+  { a: 4, id: "q38", type: "L", rev: true, t: "情報漏えいや、AIの間違いが不安だ" },
+  { a: 4, id: "q39", type: "L", t: "会社が目指す方向や、AIに取り組む理由を聞いている" },
+  { a: 4, id: "q40", type: "L", t: "社内でAIを進める人が誰か知っている" },
+  { a: 4, id: "k9", type: "P", t: "困りごとを組み合わせてください。「（やりたいこと）をしたいが、（妨げ）ので、できていない」。理由も一言どうぞ" },
+  { a: 4, id: "k10", type: "U", t: "もしAIで毎日1時間浮いたら、何がしたいですか（仕事でもプライベートでも）" }
+];
+
+// ===== 状態 =====
+let st = { step: 0, n: "", ans: {} };
+const KEY = "aibs-v" + VERSION;
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) st = s; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+const company = (location.hash || "").replace("#", "").toLowerCase();
+const app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ===== 描画 =====
+function render() {
+  const total = 7; // 0 はじめに, 1-5 領域, 6 結果
+  document.getElementById("bar").style.width = (st.step / (total - 1) * 100) + "%";
+  document.getElementById("steplabel").textContent = st.step === 0 ? "はじめに" : st.step <= 5 ? `${st.step} / 5　${AREAS[st.step - 1]}` : "結果";
+  if (st.step === 0) return intro();
+  if (st.step <= 5) return area(st.step - 1);
+  result();
+}
+
+function intro() {
+  const nums = Array.from({ length: 30 }, (_, i) => String(i + 1).padStart(2, "0"));
+  app.innerHTML = `
+    <h1>AI×人のチカラ診断</h1>
+    <p class="lead">5つの分野、全50問です。15〜20分ほどかかります。途中でやめても、同じ端末なら続きから答えられます。答えは、このページの外には送られません。最後に出る「回答ID」を、フォームに貼り付けて送ってください。</p>
+    ${FORMS[company] ? "" : '<p class="error">このページのURLが正しくないようです。社内のご担当者にお問い合わせください。</p>'}
+    <section class="q"><p class="t">参加者番号</p><p class="hint">社内のご担当者から伝えられた番号を選んでください。お名前は入力しません。</p>
+      <select id="num" aria-label="参加者番号"><option value="">選んでください</option>${nums.map(n => `<option ${st.n === n ? "selected" : ""}>${n}</option>`).join("")}</select></section>
+    <section class="q"><p class="t">答えるときのお願い</p><p class="hint">正解はありません。思ったままを選んでください。個人の結果は本人だけが見られます。会社には、部署ごとなどにまとめた結果だけを返します。</p></section>
+    <p id="err" class="error" hidden></p>
+    <div class="nav"><span></span><button class="primary" id="next" type="button">はじめる</button></div>`;
+  document.getElementById("next").onclick = () => {
+    const v = document.getElementById("num").value;
+    if (!v) { showErr("参加者番号を選んでください。"); return; }
+    st.n = v; st.step = 1; save(); render(); scrollTo(0, 0);
+  };
+}
+
+function qHtml(q, idx) {
+  const v = st.ans[q.id];
+  const head = `<p class="t"><span class="no">${idx}</span>${esc(q.t)}</p>`;
+  if (q.type === "L") return `<section class="q">${head}<div class="opts likert">${L5.map((t, i) =>
+    `<label><input type="radio" name="${q.id}" value="${i}" ${v === i ? "checked" : ""}><span>${i + 1}</span><span>${t}</span></label>`).join("")}</div></section>`;
+  if (q.type === "S" || q.type === "H") { const o = q.type === "H" ? HOURS : q.o; return `<section class="q">${head}<div class="opts">${o.map((t, i) =>
+    `<label><input type="radio" name="${q.id}" value="${i}" ${v === i ? "checked" : ""}>${esc(t)}</label>`).join("")}</div></section>`; }
+  if (q.type === "M" || q.type === "W") { const o = q.type === "W" ? WORDS : q.o; const sel = v || [];
+    return `<section class="q">${head}<div class="cards" data-q="${q.id}" data-max="${q.max}">${o.map((t, i) =>
+    `<button type="button" class="card" data-i="${i}" aria-pressed="${sel.includes(i)}">${esc(t)}</button>`).join("")}</div></section>`; }
+  if (q.type === "T") return `<section class="q">${head}<p class="hint">50字まで。空欄でも進めます。</p><textarea data-q="${q.id}" maxlength="50">${esc(v || "")}</textarea></section>`;
+  if (q.type === "P") { const p = v || { w: "", b: "", r: "" };
+    return `<section class="q">${head}<div class="pair">
+      <select data-p="w" aria-label="やりたいこと"><option value="">やりたいこと</option>${WANTS.map((t, i) => `<option value="${i}" ${p.w === i ? "selected" : ""}>${t}</option>`).join("")}</select>
+      <span>×</span>
+      <select data-p="b" aria-label="妨げ"><option value="">妨げ</option>${BLOCKS.map((t, i) => `<option value="${i}" ${p.b === i ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <textarea data-p="r" maxlength="50" placeholder="理由（50字まで・空欄でも可）">${esc(p.r || "")}</textarea></section>`; }
+  if (q.type === "U") { const u = v || { g: [], r: "" };
+    return `<section class="q">${head}<div class="cards" data-q="k10g" data-max="3">${HOURUSE.map((t, i) =>
+      `<button type="button" class="card" data-i="${i}" aria-pressed="${u.g.includes(i)}">${t}</button>`).join("")}</div>
+      <textarea data-u="r" maxlength="50" placeholder="具体的に（50字まで・空欄でも可）">${esc(u.r || "")}</textarea></section>`; }
+}
+
+function area(a) {
+  const qs = Q.filter(q => q.a === a);
+  let base = Q.findIndex(q => q.a === a);
+  app.innerHTML = `<h2>${a + 1}. ${AREAS[a]}</h2>` + qs.map((q, i) => qHtml(q, base + i + 1)).join("") +
+    `<p id="err" class="error" hidden></p><div class="nav"><button class="secondary" id="back" type="button">戻る</button><button class="primary" id="next" type="button">${a === 4 ? "結果を見る" : "次へ"}</button></div>`;
+  app.querySelectorAll("input[type=radio]").forEach(r => r.onchange = () => { st.ans[r.name] = Number(r.value); save(); });
+  app.querySelectorAll(".cards").forEach(box => box.onclick = e => {
+    const b = e.target.closest(".card"); if (!b) return;
+    const qid = box.dataset.q, max = Number(box.dataset.max), i = Number(b.dataset.i);
+    let sel = qid === "k10g" ? ((st.ans.k10 ||= { g: [], r: "" }).g) : (st.ans[qid] ||= []);
+    const k = sel.indexOf(i);
+    if (k >= 0) { sel.splice(k, 1); b.setAttribute("aria-pressed", "false"); }
+    else if (sel.length < max) { sel.push(i); b.setAttribute("aria-pressed", "true"); }
+    save();
+  });
+  app.querySelectorAll("textarea[data-q]").forEach(t => t.oninput = () => { st.ans[t.dataset.q] = t.value; save(); });
+  app.querySelectorAll("[data-p]").forEach(el => el.oninput = el.onchange = () => {
+    const p = st.ans.k9 ||= { w: "", b: "", r: "" };
+    p[el.dataset.p] = el.dataset.p === "r" ? el.value : (el.value === "" ? "" : Number(el.value)); save(); });
+  app.querySelectorAll("[data-u]").forEach(el => el.oninput = () => { (st.ans.k10 ||= { g: [], r: "" }).r = el.value; save(); });
+  document.getElementById("back").onclick = () => { st.step--; save(); render(); scrollTo(0, 0); };
+  document.getElementById("next").onclick = () => {
+    const miss = qs.filter(q => ["L", "S", "H"].includes(q.type) && !q.opt && st.ans[q.id] === undefined).map(q => Q.indexOf(q) + 1);
+    if (miss.length) { showErr("まだ答えていない質問があります：" + miss.join("、")); return; }
+    st.step++; save(); render(); scrollTo(0, 0);
+  };
+}
+function showErr(m) { const e = document.getElementById("err"); e.textContent = m; e.hidden = false; }
+
+// ===== 計算 =====
+function scores() {
+  const out = [0, 1, 2, 3, 4].map(a => {
+    const vals = [];
+    Q.filter(q => q.a === a && !q.noScore).forEach(q => {
+      const v = st.ans[q.id]; if (v === undefined) return;
+      if (q.type === "L") vals.push(q.rev ? (4 - v) * 25 : v * 25);
+      if (q.type === "S" && q.score) vals.push(q.score[v]);
+    });
+    return vals.length ? Math.round(vals.reduce((x, y) => x + y, 0) / vals.length) : 0;
+  });
+  const hrs = freed();
+  out[2] = Math.round((out[2] + Math.max(0, 100 - hrs.saved * 20)) / 2); // 業務：置き場所と、浮きそうな時間の少なさ（仮）
+  return out;
+}
+function freed() {
+  let total = 0, saved = 0, top = null, topV = 0;
+  const place = st.ans.q24; const searchC = place === 0 ? 0.4 : place === 1 ? 0.2 : 0.05;
+  Q.filter(q => q.type === "H").forEach(q => {
+    const h = HOURV[st.ans[q.id] ?? 0]; const c = q.c < 0 ? searchC : q.c;
+    total += h; saved += h * c; if (h * c > topV) { topV = h * c; top = q; }
+  });
+  return { total, saved: Math.round(saved * 10) / 10, top };
+}
+const FIRST = [
+  "学びたいことを1つ決め、週30分だけ時間を確保してみましょう。",
+  "同僚の良いところを、言葉にして1つ伝えてみましょう。",
+  "一番時間のかかる作業を1つ選び、AIに下書きを頼んでみましょう。",
+  "自分しか分からない仕事を1つ、手順として書き出してみましょう。",
+  "AIに入れてよい情報のルールを、社内の担当者に確かめてみましょう。"
+];
+
+// ===== 回答ID =====
+async function makeId() {
+  const json = JSON.stringify({ v: VERSION, c: company || "none", n: st.n, a: st.ans });
+  const bytes = new TextEncoder().encode(json);
+  let flag = "R", data = bytes;
+  if (window.CompressionStream) {
+    try { const cs = new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+      data = new Uint8Array(await new Response(cs).arrayBuffer()); flag = "Z"; } catch (e) { data = bytes; flag = "R"; }
+  }
+  let bin = ""; data.forEach(b => { bin += String.fromCharCode(b); });
+  const body = flag + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return "AIB" + VERSION + "-" + body + "-" + checksum(body);
+}
+function checksum(str) { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36).padStart(7, "0").slice(-6).toUpperCase(); }
+
+async function result() {
+  const sc = scores(), fr = freed();
+  const low = sc.indexOf(Math.min(...sc));
+  const words = (st.ans.q16 || []).map(i => WORDS[i]);
+  const id = await makeId();
+  const form = FORMS[company];
+  app.innerHTML = `
+    <h1>あなたの今の地図</h1>
+    <p class="lead">点数は評価ではありません。今の状態と、伸ばせるところを示すものです。この画面は、あなただけが見られます。</p>
+    <section class="q"><p class="t">5つの分野</p><div class="bars">${sc.map((s, i) =>
+      `<div class="bar"><span>${AREAS[i]}</span><span class="track"><i style="width:${s}%"></i></span><b>${s}</b></div>`).join("")}</div></section>
+    <section class="q"><p class="t">AIで浮きそうな時間（見込み）</p><p class="big">週 約${fr.saved}時間</p>
+      <p class="hint">対象の作業にかけている週${fr.total}時間のうち、AIで短くできそうな時間の見込みです。${fr.top ? "一番効きそうなのは「" + esc(fr.top.t.replace(/に、週何時間かけていますか/, "")) + "」です。" : ""}</p></section>
+    ${words.length ? `<section class="q"><p class="t">あなたが選んだ、自分らしさ</p><div class="tags">${words.map(w => `<span class="tag">${esc(w)}</span>`).join("")}</div></section>` : ""}
+    <section class="q"><p class="t">最初の一歩</p><p>${FIRST[low]}</p></section>
+    <section class="q"><p class="t">回答を送る</p>
+      <ol class="hint" style="margin:0;padding-left:20px"><li>「回答IDをコピー」を押します。</li><li>「フォームを開く」を押し、回答IDの欄に貼り付けて送信します。</li></ol>
+      <p id="idbox">${id}</p>
+      <div class="nav"><button class="secondary" id="copy" type="button">回答IDをコピー</button>${form ? `<a class="primary" href="${form}" target="_blank" rel="noopener">フォームを開く</a>` : ""}</div>
+      <p id="copied" class="hint" hidden>コピーしました。</p></section>
+    <div class="nav"><button class="secondary" id="back" type="button">答えを見直す</button><button class="secondary" id="reset" type="button">最初からやり直す</button></div>`;
+  document.getElementById("copy").onclick = () => {
+    const box = document.getElementById("idbox");
+    const sel = () => { const r = document.createRange(); r.selectNodeContents(box); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(box.textContent).then(() => { document.getElementById("copied").hidden = false; }, sel); else sel();
+  };
+  document.getElementById("back").onclick = () => { st.step = 1; save(); render(); scrollTo(0, 0); };
+  document.getElementById("reset").onclick = () => { if (!confirm("答えをすべて消して、最初からやり直しますか？")) return; st = { step: 0, n: "", ans: {} }; save(); render(); scrollTo(0, 0); };
+}
+render();
+</script>
+</body>
+</html>
